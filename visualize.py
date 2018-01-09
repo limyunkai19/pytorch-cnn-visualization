@@ -77,7 +77,7 @@ class GradCAM:
         # self.gradients # 1x2048x7x7
 
         # GAP = torch.nn.AvgPool2d(self.gradients.size()[2:])
-        weights = F.avg_pool2d(self.gradients, kernel_size=self.gradients.size()[2:]).data
+        weights = F.avg_pool2d(Variable(self.gradients), kernel_size=self.gradients.size()[2:]).data
 
         gradCAM_intensity = torch.FloatTensor(self.feature_maps.size()[2:]).zero_()
 

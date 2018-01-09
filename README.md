@@ -17,7 +17,7 @@ source .env/bin/activate
 
 #install pytorch, guide available at http://pytorch.org/
 #in my case, my system is macOS, python 3.6, no cuda, hence I run the following command
-pip install http://download.pytorch.org/whl/torch-0.2.0.post3-cp36-cp36m-macosx_10_7_x86_64.whl
+pip install http://download.pytorch.org/whl/torch-0.3.0.post4-cp36-cp36m-macosx_10_7_x86_64.whl
 pip install torchvision
 
 #install other dependency
