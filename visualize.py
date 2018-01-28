@@ -1,4 +1,5 @@
 import json, copy
+
 import numpy as np
 from PIL import Image
 import matplotlib.cm as Pltcolormap
@@ -9,15 +10,11 @@ import torch.nn.functional as F
 from torchvision import transforms
 from torch.autograd import Variable
 
-
-def one_hot_tensor(idx, length):
-    one_hot = torch.FloatTensor(1, length).zero_()
-    one_hot[0][idx] = 1.0
-    return one_hot
+import utils
 
 class GradCAM:
     def __init__(self, model, transform, target_layer, cuda=False):
-        self.model = copy.deepcopy(model)
+        self.model = model
         self.model.train(False)
         self.cuda = cuda
         if self.cuda:
@@ -71,7 +68,7 @@ class GradCAM:
 
         self.model.zero_grad()
         #implement sorted !!!
-        self.output.backward(gradient=one_hot_tensor(idx, 1000), retain_graph=True)
+        self.output.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
 
         # self.feature_maps # 1x2048x7x7
         # self.gradients # 1x2048x7x7
@@ -105,8 +102,7 @@ class GradCAM:
         """
 
         # normalize
-        intensity -= intensity.min()
-        intensity /= intensity.max()
+        intensity = utils.normalize(intensity)
 
         # use PIL bilinear resize interpolation
         # note: *255 -> resize -> /255.0 (divide for heat map input[0,1]) is === resize
@@ -132,7 +128,7 @@ class Backpropagation:
     """
 
     def __init__(self, model, transform, cuda=False):
-        self.model = copy.deepcopy(model)
+        self.model = model
         # self.model = model
         self.model.train(False)
         self.cuda = cuda
@@ -173,12 +169,10 @@ class Backpropagation:
 
         self.model.zero_grad()
         #implement sorted !!!
-        self.output.backward(gradient=one_hot_tensor(idx, 1000), retain_graph=True)
+        self.output.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
 
         gradient = self.input.grad.data
-        gradient -= gradient.min()
-        gradient /= gradient.max()
-        gradient *= 255
+        gradient = utils.normalize(gradient)*255
 
         # 1x3x224x224 -> 224x224x3
         gradient = gradient.cpu().numpy()[0].transpose(1, 2, 0)
@@ -190,7 +184,7 @@ class GuidedBackpropagation(Backpropagation):
     Guided Backpropagation
 
     x.grad or img.grad is what we wanted
-    GuidedBackprop === input>0 * gradin>0 * gradin on relu.backward
+    GuidedBackprop: input>0 * gradin>0 * gradin on relu.backward
     but original relu had implemented relu gradin = input>0 * gradin
     thus we only need to add gradin>0 * relu gradin
     """
@@ -209,29 +203,22 @@ class GuidedBackpropagation(Backpropagation):
             if isinstance(module, torch.nn.ReLU):
                 module.register_backward_hook(backward_hook)
 
-class GuidedGradCAM:
-    def __init__(self, model, transform, target_layer, cuda=False):
-        self.model = model
-        self.cuda = cuda
-        self.transform = transform
-        self.target_layer = target_layer
+# Use Visualize wrapper class for GuidedGradCAM for consistancy
+# class GuidedGradCAM:
 
-        self.GradCAM = GradCAM(model, transforms, target_layer, cuda)
-        self.GuidedBackprop = GuidedBackpropagation(model, transforms, cuda)
+# class Visualize:
+    """
+    A warpper class for all the visualization algorithm to keep model consistancy
+    """
 
-    def forward(self, img):
-        """ The forward pass
-
-        Argument:
-            img (Tensor) - the (unprocessed) input image
-
-        Return:
-            Tensor/Dict
-        """
-        pass
 
 
 if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        print("usage: python visualize.py path/to/image")
+        exit()
+
     resnet = torchvision.models.resnet152(pretrained=True)
     preprocess = transforms.Compose([
        # transforms.Scale(256),
@@ -244,11 +231,6 @@ if __name__ == '__main__':
         )
     ])
     class_name = json.load(open('data/class_name.json', 'r'))
-
-    import sys
-    if len(sys.argv) < 2:
-        print("usage: python visualize.py path/to/image")
-        exit()
 
     img_pil = Image.open(sys.argv[1])
     img_pil = img_pil.resize((224, 224))
@@ -278,8 +260,7 @@ if __name__ == '__main__':
 
 
         gbackprop_arr = np.array(gbackprop_img.convert("L"), dtype='float')
-        # gbackprop_arr -= gbackprop_arr.min()
-        # gbackprop_arr /= gbackprop_arr.max()
+        # gbackprop_arr = utils.normalize(gbackprop_arr)
 
         g_gradcam = gbackprop_arr*gradcam_intensity
 
