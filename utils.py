@@ -64,7 +64,8 @@ def normalize(x):
         other datatype such as int or uint may cause unexpected behaeviour
     """
 
-    x -= x.min()
-    x /= x.max()
+
+    x = x - x.min()
+    x = x / x.max()
 
     return x
