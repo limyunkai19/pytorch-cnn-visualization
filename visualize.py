@@ -182,7 +182,7 @@ class Backpropagation:
 
         Return:
             PIL image - The RGB gradient images generated based on the gradient value
-            Numpy array - The gradient value for each pixel (range: [0-1])
+            Numpy array (nxnxc) - The gradient value for each pixel
         """
 
         #implement sorted_idx !!!
@@ -190,12 +190,11 @@ class Backpropagation:
         if backward:
             self.backward(idx)
 
-        gradient = utils.normalize(self.input.grad.data)
-
         # 1x3x224x224 -> 224x224x3
-        gradient = gradient.cpu().numpy()[0].transpose(1, 2, 0)
+        gradient = self.input.grad.data.cpu().numpy()[0].transpose(1, 2, 0)
 
-        return Image.fromarray(np.uint8(gradient*255)), gradient
+        gradient_img_arr = (utils.normalize(gradient)*255).astype('uint8')
+        return Image.fromarray(gradient_img_arr), gradient
 
 class GuidedBackpropagation(Backpropagation):
     """
@@ -460,11 +459,13 @@ class Visualize:
     #
     #     return utils.normalize(gradient)
     #
-    # def get_guided_gramcam_saliency(self, idx, sorted_idx=False):
-    #     gbackprop = self.get_guided_backprop_saliency(idx, sorted)
-    #     gradcam = self.get_gradcam_intensity(idx, sorted)[1]
-    #
-    #     return gBackprop*gradcam
+    def get_guided_gramcam_saliency(self, idx, sorted_idx=False):
+        _, gradcam = self.get_gradcam_heatmap(idx, sorted)
+        _, gradient = self.get_guided_backprop_gradient(idx, sorted_idx)
+
+        result = (gradient.transpose(2, 0, 1)*gradcam).transpose(1, 2, 0)
+        result = utils.normalize(result)
+        return Image.fromarray((result*255).astype('uint8')), result
 
 if __name__ == '__main__':
     import sys
@@ -488,39 +489,24 @@ if __name__ == '__main__':
     img_pil = Image.open(sys.argv[1])
     img_pil = img_pil.resize((224, 224))
 
-    gradcam = GradCAM(resnet, preprocess, "layer4.2")
-    guidedbackprop = GuidedBackpropagation(resnet, preprocess)
-    backprop = Backpropagation(resnet, preprocess)
+    visualizer = Visualize(resnet, preprocess, "layer4.2", retainModel=False)
 
-    # all x should be the same
-    x = gradcam.forward(img_pil)
-    x = guidedbackprop.forward(img_pil)
-    x = backprop.forward(img_pil)
-
+    visualizer.input_image(img_pil)
+    x = visualizer.get_prediction_output()
     score = x.cpu().numpy()[0]
 
     # get the top 3 prediction
     print("Top 3 prediction")
     for i in range(3):
         idx = score.argmax()
-        intensity = gradcam.get_gradcam_intensity(idx)
-        gradcam_img, gradcam_intensity = gradcam.apply_color_map(intensity, img_pil)
-
-        gbackprop_img, _ = guidedbackprop.get_input_gradient(idx)
-        # guidedbackprop.backward(idx1).convert('L').save('gb.png')
-
-        backprop_img, _ = backprop.get_input_gradient(idx)
-
-        gbackprop_arr = np.array(gbackprop_img.convert("L"), dtype='float')
-        # gbackprop_arr = utils.normalize(gbackprop_arr)
-
-        g_gradcam = gbackprop_arr*gradcam_intensity
-
-        g_gradcam_img = Image.fromarray(g_gradcam)
-
         print(idx, score[idx], class_name[idx])
 
-        img = [gradcam_img, gbackprop_img, backprop_img, g_gradcam_img]
+        img = [
+            visualizer.get_gradcam_heatmap(idx)[0],
+            visualizer.get_guided_backprop_gradient(idx)[0],
+            visualizer.get_vanilla_backprop_gradient(idx)[0],
+            visualizer.get_guided_gramcam_saliency(idx)[0]
+        ]
         title = ["Grad-CAM", "Guided Backpropagation", "Backpropagation", "Guided Grad-CAM"]
         fig = PLT.figure(class_name[idx].split(",")[0])
 
