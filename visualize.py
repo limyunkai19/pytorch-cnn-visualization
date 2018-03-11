@@ -481,7 +481,6 @@ if __name__ == '__main__':
     input_size = utils.get_input_size(args.model)
     target_layer = utils.get_conv_layer(args.model)
     preprocess = transforms.Compose([
-       transforms.Resize(input_size),
        transforms.ToTensor(),
        transforms.Normalize(
            mean=[0.485, 0.456, 0.406],
@@ -491,7 +490,7 @@ if __name__ == '__main__':
     class_name = json.load(open('data/class_name.json', 'r'))
 
     img_pil = Image.open(args.image)
-    # img_pil = img_pil.resize((224, 224))
+    img_pil = img_pil.resize((input_size,input_size))
 
     visualizer = Visualize(cnn, preprocess, target_layer, retainModel=False)
 
