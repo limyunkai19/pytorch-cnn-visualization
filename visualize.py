@@ -469,10 +469,11 @@ class Visualize:
         return Image.fromarray((result*255).astype('uint8')), result
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) < 2:
-        print("usage: python visualize.py path/to/image")
-        exit()
+    import argparse
+    parser = argparse.ArgumentParser(description='Transfer Learning Train')
+    parser.add_argument('image', metavar='image-path',
+                            help='path to the input image')
+    args = parser.parse_args()
 
     model_name = 'resnet152'
 
@@ -489,7 +490,7 @@ if __name__ == '__main__':
     ])
     class_name = json.load(open('data/class_name.json', 'r'))
 
-    img_pil = Image.open(sys.argv[1])
+    img_pil = Image.open(args.image)
     # img_pil = img_pil.resize((224, 224))
 
     visualizer = Visualize(resnet, preprocess, target_layer, retainModel=False)
