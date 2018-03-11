@@ -471,15 +471,15 @@ class Visualize:
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Transfer Learning Train')
-    parser.add_argument('image', metavar='image-path',
-                            help='path to the input image')
+    parser.add_argument('image', help='path to the input image')
+    parser.add_argument('--model', default='resnet152', metavar='model_name',
+                        help='name of the model to visualize')
     args = parser.parse_args()
 
-    model_name = 'resnet152'
 
-    resnet = torchvision.models.__dict__[model_name](pretrained=True)
-    input_size = utils.get_input_size(model_name)
-    target_layer = utils.get_conv_layer(model_name)
+    cnn = torchvision.models.__dict__[args.model](pretrained=True)
+    input_size = utils.get_input_size(args.model)
+    target_layer = utils.get_conv_layer(args.model)
     preprocess = transforms.Compose([
        transforms.Resize(input_size),
        transforms.ToTensor(),
@@ -493,7 +493,7 @@ if __name__ == '__main__':
     img_pil = Image.open(args.image)
     # img_pil = img_pil.resize((224, 224))
 
-    visualizer = Visualize(resnet, preprocess, target_layer, retainModel=False)
+    visualizer = Visualize(cnn, preprocess, target_layer, retainModel=False)
 
     visualizer.input_image(img_pil)
     x = visualizer.get_prediction_output()
