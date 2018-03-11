@@ -473,11 +473,13 @@ if __name__ == '__main__':
         print("usage: python visualize.py path/to/image")
         exit()
 
-    resnet = torchvision.models.resnet152(pretrained=True)
+    model_name = 'resnet152'
+
+    resnet = torchvision.models.__dict__[model_name](pretrained=True)
+    input_size = utils.get_input_size(model_name)
+    target_layer = utils.get_conv_layer(model_name)
     preprocess = transforms.Compose([
-       # transforms.Scale(256),
-       transforms.CenterCrop(224),
-       # transforms.Scale(224),
+       transforms.Resize(input_size),
        transforms.ToTensor(),
        transforms.Normalize(
            mean=[0.485, 0.456, 0.406],
@@ -487,9 +489,9 @@ if __name__ == '__main__':
     class_name = json.load(open('data/class_name.json', 'r'))
 
     img_pil = Image.open(sys.argv[1])
-    img_pil = img_pil.resize((224, 224))
+    # img_pil = img_pil.resize((224, 224))
 
-    visualizer = Visualize(resnet, preprocess, "layer4.2", retainModel=False)
+    visualizer = Visualize(resnet, preprocess, target_layer, retainModel=False)
 
     visualizer.input_image(img_pil)
     x = visualizer.get_prediction_output()

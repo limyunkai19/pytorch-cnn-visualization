@@ -1,0 +1,20 @@
+{
+    "alexnet": 224,
+
+    "vgg11": 224,
+    "vgg11_bn": 224,
+    "vgg13": 224,
+    "vgg13_bn": 224,
+    "vgg16": 224,
+    "vgg16_bn": 224,
+    "vgg19": 224,
+    "vgg19_bn": 224,
+
+    "resnet18": 224,
+    "resnet34": 224,
+    "resnet50": 224,
+    "resnet101": 224,
+    "resnet152": 224,
+
+    "inception_v3": 299
+}
