@@ -222,12 +222,17 @@ class Visualize:
         result = utils.normalize(result)
         return Image.fromarray((result*255).astype('uint8')), result
 
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Transfer Learning Train')
     parser.add_argument('image', help='path to the input image')
     parser.add_argument('--model', default='resnet152', metavar='model_name',
                         help='name of the model to visualize')
+    parser.add_argument('--class-idx', default='top3', metavar='ID1,ID2',
+                        help='the class index for CAM visualizing, \
+                              can be comma seperated index or the string "top1" or "top3"')
     args = parser.parse_args()
 
 
@@ -252,10 +257,19 @@ if __name__ == '__main__':
     x = visualizer.get_prediction_output()
     score = x.cpu().numpy()[0]
 
-    # get the top 3 prediction
-    print("Top 3 prediction")
-    for i in range(3):
-        idx = score.argmax()
+    if args.class_idx == 'top1' or args.class_idx == 'top3':
+        i = int(args.class_idx[3])
+
+        tmp_score = score.copy()
+
+        class_idx = []
+        for i in range(i):
+            class_idx.append(tmp_score.argmax())
+            tmp_score[class_idx[-1]] = -1000
+    else:
+        class_idx = [int(i) for i in args.class_idx.split(',')]
+
+    for idx in class_idx:
         print(idx, score[idx], class_name[idx])
 
         img = [
@@ -275,5 +289,3 @@ if __name__ == '__main__':
 
         PLT.suptitle(class_name[idx]+" Score: "+str(x[0][idx])[:5], fontsize=18)
         PLT.show()
-
-        score[idx] = -1000
