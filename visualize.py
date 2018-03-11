@@ -460,9 +460,10 @@ class Visualize:
     #     return utils.normalize(gradient)
     #
     def get_guided_gramcam_saliency(self, idx, sorted_idx=False):
-        _, gradcam = self.get_gradcam_heatmap(idx, sorted)
+        _, gradcam = self.get_gradcam_heatmap(idx, sorted_idx)
         _, gradient = self.get_guided_backprop_gradient(idx, sorted_idx)
 
+        # gradient = utils.normalize(gradient) # this make the background black in guided gradcam
         result = (gradient.transpose(2, 0, 1)*gradcam).transpose(1, 2, 0)
         result = utils.normalize(result)
         return Image.fromarray((result*255).astype('uint8')), result
