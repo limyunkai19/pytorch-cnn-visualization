@@ -7,8 +7,8 @@ import torch, torchvision
 from torchvision import transforms
 from torch.autograd import Variable
 
-import utils
-from core import Backpropagation, GuidedBackpropagation, GradCAM
+from . import utils
+from .core import Backpropagation, GuidedBackpropagation, GradCAM
 
 class Visualize:
     """

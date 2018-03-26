@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 import matplotlib.cm as Pltcolormap
 
-import utils
+from . import utils
 
 class GradCAM:
     """

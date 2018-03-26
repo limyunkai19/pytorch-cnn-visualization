@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 import numpy as np
 
-import utils
+from . import utils
 
 class Adversarial:
     """
