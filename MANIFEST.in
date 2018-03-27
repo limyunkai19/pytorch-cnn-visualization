@@ -1,5 +1,2 @@
-recursive-include pytorch_cnn_visualization/data *.json
-include pytorch_cnn_visualization/misc_scripts/layer_name.py
-include MANIFEST.in
 include LICENSE
 include README.md

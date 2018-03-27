@@ -2,8 +2,10 @@ from setuptools import setup
 
 setup(
     name='pytorch-cnn-visualization',
-    version='0.2.2',
+    version='0.2.3',
     packages=['pytorch_cnn_visualization'],
+    package_dir={'pytorch_cnn_visualization': 'pytorch_cnn_visualization'},
+    package_data={'pytorch_cnn_visualization': ['data/*.json', 'misc_scripts/*.py']},
     license='MIT',
     description='Several CNN visualization implemented in Pytorch',
     long_description=open('README.md').read(),

@@ -1,3 +1,4 @@
+import os
 import json
 import torch
 import numpy as np
@@ -72,14 +73,14 @@ def normalize(x):
     return x
 
 def get_conv_layer(model_name, layer=-1):
-    f = open('data/conv_layer_name.json', 'r')
+    f = open(os.path.join(os.path.dirname(__file__), 'data/conv_layer_name.json'), 'r')
     conv_layer_name = json.load(f)
     f.close()
 
     return conv_layer_name[model_name][layer]
 
 def get_input_size(model_name):
-    f = open('data/input_size.json', 'r')
+    f = open(os.path.join(os.path.dirname(__file__), 'data/input_size.json'), 'r')
     input_size = json.load(f)
     f.close()
 
