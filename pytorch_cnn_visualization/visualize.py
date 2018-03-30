@@ -19,23 +19,25 @@ class Visualize:
         is to make different classes share the same model for efficiency
     """
 
-    def __init__(self, model, transform, target_layer, retainModel=True, cuda=False):
+    def __init__(self, model, transform, target_layer, num_classes=1000, retainModel=True, cuda=False):
         self.model = model
         self.cuda = cuda
         self.transform = transform
         self.target_layer = target_layer
+        self.num_classes = num_classes
 
         if retainModel:
             self.model = copy.deepcopy(model)
 
         self.gradCAM = GradCAM(self.model, self.transform,
-                               self.target_layer, self.cuda)
-        self.vBackprop = Backpropagation(self.model, self.transform, self.cuda)
+                               self.target_layer, self.num_classes, self.cuda)
+        self.vBackprop = Backpropagation(self.model, self.transform, self.num_classes, self.cuda)
         self.gBackprop = GuidedBackpropagation(
             # guided backprop will change the gradient on back prop
             # need a copy of model
             copy.deepcopy(model),
             self.transform,
+            self.num_classes,
             self.cuda
         )
 
@@ -123,7 +125,7 @@ class Visualize:
 
         if self._model_idx != idx:
             self.model.zero_grad()
-            self.output.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
+            self.output.backward(gradient=utils.one_hot_tensor(idx, self.num_classes), retain_graph=True)
             self._model_idx = idx
 
         self._gradcam_intensity = self.gradCAM.get_gradcam_intensity(idx, backward=False)
@@ -171,7 +173,7 @@ class Visualize:
 
         if self._model_idx != idx:
             self.model.zero_grad()
-            self.output.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
+            self.output.backward(gradient=utils.one_hot_tensor(idx, self.num_classes), retain_graph=True)
             self._model_idx = idx
 
         self._vbackprop_gradient = self.vBackprop.get_input_gradient(idx, backward=False)
@@ -200,7 +202,7 @@ class Visualize:
 
         if self._gmodel_idx != idx:
             self.gBackprop.model.zero_grad()
-            self.output_gbackprop.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
+            self.output_gbackprop.backward(gradient=utils.one_hot_tensor(idx, self.num_classes), retain_graph=True)
             self._gmodel_idx = idx
 
         self._gbackprop_gradient = self.gBackprop.get_input_gradient(idx, backward=False)

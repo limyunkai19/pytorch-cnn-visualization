@@ -18,7 +18,7 @@ class GradCAM:
     Reference: https://arxiv.org/abs/1610.02391
     """
 
-    def __init__(self, model, transform, target_layer, cuda=False):
+    def __init__(self, model, transform, target_layer, num_classes=1000, cuda=False):
         self.model = model
         self.model.train(False)
         self.cuda = cuda
@@ -26,6 +26,7 @@ class GradCAM:
             self.model.cuda()
         self.transform = transform
         self.target_layer = target_layer
+        self.num_classes = num_classes
 
         # define hook function
         def forward_hook(module, input, output):
@@ -59,7 +60,7 @@ class GradCAM:
 
     def backward(self, idx, sorted_idx=False):
         self.model.zero_grad()
-        self.output.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
+        self.output.backward(gradient=utils.one_hot_tensor(idx, self.num_classes), retain_graph=True)
 
     def get_gradcam_intensity(self, idx, sorted_idx=False, backward=True):
         """ The (partial) backward pass and generate GradCAM intensity value for each pixel
@@ -135,7 +136,7 @@ class Backpropagation:
     Backpropagate to input then get the gradient at input
     """
 
-    def __init__(self, model, transform, cuda=False):
+    def __init__(self, model, transform, num_classes=1000, cuda=False):
         self.model = model
         # self.model = model
         self.model.train(False)
@@ -143,6 +144,7 @@ class Backpropagation:
         if self.cuda:
             self.model.cuda()
         self.transform = transform
+        self.num_classes = num_classes
 
     def forward(self, img):
         """ The forward pass
@@ -164,7 +166,7 @@ class Backpropagation:
 
     def backward(self, idx):
         self.model.zero_grad()
-        self.output.backward(gradient=utils.one_hot_tensor(idx, 1000), retain_graph=True)
+        self.output.backward(gradient=utils.one_hot_tensor(idx, self.num_classes), retain_graph=True)
 
     def get_input_gradient(self, idx, sorted_idx=False, backward=True):
         """ The backward pass and return the gradient at input image
@@ -208,8 +210,8 @@ class GuidedBackpropagation(Backpropagation):
         not the desired behaeviour, construct this class with a deepcopy of model
     """
 
-    def __init__(self, model, transform, cuda=False):
-        super().__init__(model, transform, cuda)
+    def __init__(self, model, transform, num_classes, cuda=False):
+        super().__init__(model, transform, num_classes, cuda)
 
         # define hook function
         def backward_hook(module, grad_input, grad_output):
