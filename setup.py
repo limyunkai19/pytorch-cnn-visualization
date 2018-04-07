@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pytorch-cnn-visualization',
-    version='0.2.5',
+    version='0.2.6',
     packages=['pytorch_cnn_visualization'],
     package_dir={'pytorch_cnn_visualization': 'pytorch_cnn_visualization'},
     package_data={'pytorch_cnn_visualization': ['data/*.json', 'misc_scripts/*.py']},

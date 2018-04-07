@@ -66,11 +66,10 @@ def normalize(x):
         other datatype such as int or uint may cause unexpected behaeviour
     """
 
+    if x.max() - x.min() == 0:
+        return x
 
-    x = x - x.min()
-    x = x / x.max()
-
-    return x
+    return (x - x.min()) / (x.max() - x.min())
 
 def get_conv_layer(model_name, layer=-1):
     f = open(os.path.join(os.path.dirname(__file__), 'data/conv_layer_name.json'), 'r')
